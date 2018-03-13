@@ -1,2 +1,4 @@
 # chatin
-javascript Chat using IRC protocol
+IRC protocol
+socketio
+cookies

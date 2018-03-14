@@ -1,0 +1,56 @@
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="functions.js" type="text/javascript"></script>
+		<script src="js.cookie.js" type="text/javascript"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<link rel="stylesheet" type="text/css" href="style.css"/>
+		<script>
+			$(function(){
+				
+				var iosocket = io(); 
+				
+                iosocket.on('connect', function () 
+                {					
+                    $('#mural').append("You're online.<br>");
+                    
+                    iosocket.on('message', function(message) 
+                    {
+						var date = new Date();
+						$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+'] '+message+'<br>');
+					});
+				});
+				
+				$('#message').keypress(function(event) 
+				{
+                    var date = new Date();
+                    
+                    if(event.which == 13) 
+                    {						
+						event.preventDefault(); 
+						iosocket.emit('message', $('#message').val());						
+						$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+']: '+$('#message').val()+'<br>');						
+						$('#message').val('');
+					}
+				});
+
+				$('#send').on('click',function(event)
+				{
+					var date = new Date();
+					iosocket.emit('message', $('#message').val());					
+					$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+']: '+$('#message').val()+'<br>');
+					$('#message').val('');
+				});
+			});		
+		</script>
+		<title>chatin</title>
+	</head>
+
+	<body onload="initialize('mural')">
+		<div class='mural' id="mural"></div>
+		<br/>	
+		<div id="status"></div><br/>		
+		Message: <input type="text" size="30" id="message"> 
+		<input type="button" value="send" id='send'>
+	</body>
+</html>

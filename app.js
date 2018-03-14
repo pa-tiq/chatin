@@ -23,7 +23,6 @@ app.get('/',function(req,res)
 {
     if ( req.cookies.server && req.cookies.nick  && req.cookies.channel ) 
 	{		
-		res.cookie('id', proxy_id);
 		res.sendFile(path.join(__dirname, '/index.html'));
 	}
 	else 
@@ -38,7 +37,7 @@ app.post('/login', function (req,res)
 	{
 		req.body.channel = '#'+req.body.channel;
     }
-        
+
     res.cookie('nick', req.body.name);
 	res.cookie('channel', req.body.channel);
 	res.cookie('server', req.body.server);
@@ -57,13 +56,21 @@ io.on('connection', function(socket)
     irc_client.addListener('motd', function(motd)
     {
         socket.emit('motd', '<pre>'+motd+'</pre>');
-    })
+    });
+
+    irc_client.addListener('message', function(nick, to, text, msg){
+		
+		console.log( 'message: ' + msg);
+		var message = '&lt' + nick + '&gt ' + text;
+		console.log('<' + nick + '>' + text);
+		socket.emit('message',message);
+	});
 
     socket.irc_client = irc_client;
 
-    socket.on('message', function(message)
+    socket.on('message', function(msg)
     {
-
+        console.log(client.nick+': '+ msg);
     });
 });
 

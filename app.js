@@ -71,6 +71,7 @@ io.on('connection', function(socket)
 	});
 
     socket.irc_client = irc_client;
+    socket.irc_client.send('motd');
 
     socket.on('message', function(msg)
     {

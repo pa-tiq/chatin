@@ -10,7 +10,7 @@ function timestamp_to_date( timestamp )
 	return s_hours + ":" + s_minutes + ":" + s_seconds;
 }
 
-function initialize(elemento_id) 
+function initialize(element_id) 
 {
 	$("#status").text("Connected - irc://"+	Cookies.get("nick")+"@"+Cookies.get("server")+"/"+Cookies.get("channel"));
 }

@@ -38,7 +38,7 @@ app.post('/login', function (req,res)
 		req.body.channel = '#'+req.body.channel;
     }
 
-    res.cookie('nick', req.body.name);
+    res.cookie('nick', req.body.nick);
 	res.cookie('channel', req.body.channel);
 	res.cookie('server', req.body.server);
 	res.redirect('/');
@@ -46,6 +46,10 @@ app.post('/login', function (req,res)
 
 io.on('connection', function(socket)
 {
+    socket.nick = socket.request.headers.cookie.nick;  
+	socket.server = socket.request.headers.cookie.server;
+	socket.channel = socket.request.headers.cookie.channel;
+
     var irc_client = new irc.Client(socket.server, socket.nick);
 
     irc_client.addListener('registered', function(message)
@@ -58,8 +62,8 @@ io.on('connection', function(socket)
         socket.emit('motd', '<pre>'+motd+'</pre>');
     });
 
-    irc_client.addListener('message', function(nick, to, text, msg){
-		
+    irc_client.addListener('message', function(nick, to, text, msg)
+    {		
 		console.log( 'message: ' + msg);
 		var message = '&lt' + nick + '&gt ' + text;
 		console.log('<' + nick + '>' + text);
@@ -70,7 +74,7 @@ io.on('connection', function(socket)
 
     socket.on('message', function(msg)
     {
-        console.log(client.nick+': '+ msg);
+        console.log(socket.nick+': '+ msg);
     });
 });
 

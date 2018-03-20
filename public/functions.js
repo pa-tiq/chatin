@@ -17,7 +17,7 @@ $(document).ready(function() //JQuery
 			var nick = Cookies.get("nick");
 			var servidor = Cookies.get("servidor");
 
-			$("#status").text("Conectado - irc://"+nick+"@"+server+"/"+channel);
+			$("#status").text("Connected - irc://"+nick+"@"+server+"/"+channel);
 			$.post("/login", {"nick":nick, "channel":channel, "server":server}, function(whatever){}, "html");		
 		});
 

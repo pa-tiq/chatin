@@ -1,12 +1,9 @@
 function Join(client, channel)
 {
     if(channel && channel[0]!='#') channel = '#'+channel;
-    if(client.canal) client.leave(client.canal);
-    client.join(channel);
-    client.canal = channel;    
-    client.irc_client.join(client.canal);
-    client.irc_client.emit('join', client.canal);
-    client.broadcast.to(client.canal).emit('join-channel', client.nick);
+    if(client.channel) client.leave(client.channel);  
+    client.irc_client.join(client.channel);
+    client.irc_client.emit('join', client.channel);
 }
 
 module.exports = Join;

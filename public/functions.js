@@ -6,16 +6,17 @@ $(document).ready(function() //JQuery
 				
 	iosocket.on('connect', function () 
 	{		
-		iosocket.on('motd', (motd)=>{$('#mural').append(motd+'<br>');});
+		iosocket.on('motd', (motd)=>{$('#mural').append(motd+' <br>');});
 		iosocket.on('registered', (data)=>{$('#mural').append(data+' <br>');});
-		iosocket.on('error', (error)=>{$('#mural').append(''+error+' <br>');});
+		iosocket.on('error', (error)=>{$('#mural').append('[IRC] ERROR! '+error+' <br>');});
+		iosocket.on('join#channel', (nick, message)=>{$('#mural').append('[IRC] '+message+' <br>');});
 
 		iosocket.on('join', function(channel)
 		{
-			$('#mural').append('[IRC] You joined channel '+channel+'.<br>');
+			//$('#mural').append('[IRC] You joined channel '+channel+'.<br>');
 
 			var nick = Cookies.get("nick");
-			var servidor = Cookies.get("servidor");
+			var server = Cookies.get("server");
 
 			$("#status").text("Connected - irc://"+nick+"@"+server+"/"+channel);
 			$.post("/login", {"nick":nick, "channel":channel, "server":server}, function(whatever){}, "html");		
@@ -23,44 +24,38 @@ $(document).ready(function() //JQuery
 
 		iosocket.on('message', function(message) 
 		{
-			var date = new Date();
-			$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+'] '+message+'<br>');
+			$('#mural').append('['+timestamp()+'] '+message+' <br>');
 		});
 
 	});
 	
 	$('#message').keypress(function(event) 
 	{
-		var date = new Date();
-		
 		if(event.which == 13) 
 		{						
 			event.preventDefault(); 
 			iosocket.emit('message', $('#message').val());						
-			$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+']: '+$('#message').val()+'<br>');						
+			$('#mural').append('['+timestamp()+']: '+$('#message').val()+'<br>');						
 			$('#message').val('');
 		}
 	});
 
 	$('#send').on('click',function(event)
 	{
-		var date = new Date();
 		iosocket.emit('message', $('#message').val());					
-		$('#mural').append('['+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds()+']: '+$('#message').val()+'<br>');
+		$('#mural').append('['+timestamp()+']: '+$('#message').val()+'<br>');
 		$('#message').val('');
 	});
 });
 
-function timestamp_to_date( timestamp ) 
+function timestamp() 
 {
-	var date = new Date( timestamp );
+	var date = new Date();
 	var hours = date.getHours();
 	var s_hours = hours < 10 ? "0"+hours : ""+hours;
 	var minutes = date.getMinutes();
 	var s_minutes = minutes < 10 ? "0"+minutes : ""+minutes;
-	var seconds = date.getSeconds();
-	var s_seconds = seconds < 10 ? "0"+seconds : ""+seconds;
-	return s_hours + ":" + s_minutes + ":" + s_seconds;
+	return s_hours + ":" + s_minutes;
 }
 
 function initialize(element_id) 

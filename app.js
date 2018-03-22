@@ -19,10 +19,10 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(express.static('public'));
 
-var ChannelMessage = require('./commands/ChannelMessage');
+var Message = require('./commands/Message'); //all typed messages go through function Message first
 var Join = require('./commands/Join');
 
-//req.cookies: {"nick":"a","channel":"#a","server":"ircd","id":"1","io":"JL1ReXHlc7_NLAZiAAAC"}
+var clients = [];
 
 app.get('/',function(req,res)
 {
@@ -58,9 +58,10 @@ io.on('connection', function(client)
 
     var irc_client = new irc.Client(client.server, client.nick);
 
+    //irc client listens to updates from the irc server through the events below
+    //the response comes goes from here(server side) to the client side(functions.js)
     irc_client.addListener('registered', function(message)
     {
-        client.emit('registered', "[IRC] You're registered!");
         Join(client,client.channel);
     });
 
@@ -69,18 +70,23 @@ io.on('connection', function(client)
         client.emit('motd', '<pre>'+motd+'</pre>');
     });
     
-	irc_client.addListener('error', function(message){
+    irc_client.addListener('error', function(message)
+    {
 		client.emit('erro', message.args[2]);
     });
     
     irc_client.addListener('join', function(channel)
 	{
 		client.emit('join', channel);
-	});
+    });
+    
+    irc_client.addListener('join#channel', function(nick,msg)
+    {
+        client.emit('join#channel', nick, msg )
+    });
 
     irc_client.addListener('message', function(nick, to, text, msg)
     {		
-		console.log( 'message: ' + msg);
 		var message = '&lt' + nick + '&gt ' + text;
 		console.log('<' + nick + '>' + text);
 		client.emit('message',message);
@@ -100,9 +106,5 @@ server.listen(3000, function()
     console.log("listening on port 3000");
 });
 
-function Message(msg,client)
-{
-    console.log(client.nick+': '+ msg);
 
-    ChannelMessage(msg,client);
-}
+

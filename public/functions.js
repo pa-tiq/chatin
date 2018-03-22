@@ -9,17 +9,26 @@ $(document).ready(function() //JQuery
 		iosocket.on('motd', (motd)=>{$('#mural').append(motd+' <br>');});
 		iosocket.on('registered', (data)=>{$('#mural').append(data+' <br>');});
 		iosocket.on('error', (error)=>{$('#mural').append('[IRC] ERROR! '+error+' <br>');});
-		iosocket.on('join#channel', (nick, message)=>{$('#mural').append('[IRC] '+message+' <br>');});
-
-		iosocket.on('join', function(channel)
+		iosocket.on('part', function(data)
 		{
-			//$('#mural').append('[IRC] You joined channel '+channel+'.<br>');
 
+			$('#mural').append('[IRC] '+data.nick+' left '+data.channel+'. <br>');
+		});
+
+		iosocket.on('join', function(data)
+		{
 			var nick = Cookies.get("nick");
 			var server = Cookies.get("server");
 
-			$("#status").text("Connected - irc://"+nick+"@"+server+"/"+channel);
-			$.post("/login", {"nick":nick, "channel":channel, "server":server}, function(whatever){}, "html");		
+			if(nick == data.nick)
+			{
+				$("#status").text("Connected - irc://"+nick+"@"+server+"/"+data.channel);
+				$.post("/login", {"nick":nick, "channel":data.channel, "server":server}, function(whatever){}, "html");		
+			}
+			else
+			{
+				$('#mural').append('[IRC] '+data.nick+' joined '+data.channel+'. <br>');
+			}
 		});
 
 		iosocket.on('message', function(message) 

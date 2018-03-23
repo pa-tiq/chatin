@@ -38,13 +38,12 @@ app.get('/',function(req,res)
 
 app.post('/login', function (req,res)
 {  
-    if(req.body.channel && req.body.channel[0]!='#')
+    if(req.body.channels && req.body.channels[0]!='#')
 	{
-		req.body.channel = '#'+req.body.channel;
+		req.body.channels = '#'+req.body.channels;
     }
-
     res.cookie('nick', req.body.nick);
-	res.cookie('channel', req.body.channel);
+	res.cookie('channels', req.body.channels);
     res.cookie('server', req.body.server);
     res.cookie('id', '_' + Math.random().toString(36).substr(2, 9));
 	res.redirect('/');
@@ -55,7 +54,7 @@ io.on('connection', function(client)
 { 
     client.nick = client.request.headers.cookie.nick;
 	client.server = client.request.headers.cookie.server;
-    client.channel = client.request.headers.cookie.channel;
+    client.channels = JSON.parse(client.request.headers.cookie.channels);
     client.id = client.request.headers.cookie.id;
 
     var irc_client = new irc.Client(client.server, client.nick);
@@ -64,7 +63,7 @@ io.on('connection', function(client)
     //the response comes goes from here(server side) to the client side(functions.js)
     irc_client.addListener('registered', function(message)
     {
-        Join(client,client.channel);
+        Join(client,client.channels);
     });
 
     irc_client.addListener('motd', function(motd)
@@ -77,21 +76,22 @@ io.on('connection', function(client)
 		client.emit('erro', message.args[2]);
     });
 
-    irc_client.addListener('join', function(channel,nick,message)
+    irc_client.addListener('join', function(channels,nick,message)
 	{
         console.log("[app.js] join");
-		client.emit('join', {'channel':channel, 'nick':nick});
+		client.emit('join', {'channels':channels, 'nick':nick});
     });
     
-    irc_client.addListener('part', function(channel,nick,reason,message)
+    irc_client.addListener('part', function(channels,nick,reason,message)
     {
         console.log("[app.js] part");
-        client.emit('part', {'channel':channel,'nick':nick, 'reason':reason} )
+        client.emit('part', {'channels':channels,'nick':nick, 'reason':reason} )
     });
 
-    irc_client.addListener('quit', function(nick, reason, channels, message)
+    irc_client.addListener('quit', function(nick, reason, channelss, message)
     {
-		socket.broadcast.emit('quit', nick);
+        console.log("[app.js] quit");
+		client.emit('quit', nick);
 		client.disconnect();
 	});
 
@@ -110,7 +110,7 @@ io.on('connection', function(client)
     });
 
     clients[client.id] = client;
-    console.log(client.id,client.nick,client.channel);
+    console.log(client.id,client.nick,client.channels);
 
 });
 

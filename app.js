@@ -38,13 +38,18 @@ app.get('/',function(req,res)
 
 app.post('/login', function (req,res)
 {  
-    if(req.body.channels && req.body.channels[0]!='#')
-	{
-		req.body.channels = '#'+req.body.channels;
+    if(req.body.channels)
+    {
+        var chs = req.body.channels.split(",");
+        for(var i = 0; i < chs.length; i++)
+        {
+            if(chs[i][0]!='#') chs[i] = '#'+chs[i];
+        }
     }
+
     res.cookie('nick', req.body.nick);
-	res.cookie('channels', req.body.channels);
-    res.cookie('server', req.body.server);
+	res.cookie('channels', chs.toString());
+    res.cookie('server', "irc.freenode.net");
     res.cookie('id', '_' + Math.random().toString(36).substr(2, 9));
 	res.redirect('/');
 });
@@ -54,7 +59,7 @@ io.on('connection', function(client)
 { 
     client.nick = client.request.headers.cookie.nick;
 	client.server = client.request.headers.cookie.server;
-    client.channels = JSON.parse(client.request.headers.cookie.channels);
+    client.channels = client.request.headers.cookie.channels.split(",");
     client.id = client.request.headers.cookie.id;
 
     var irc_client = new irc.Client(client.server, client.nick);
@@ -64,6 +69,7 @@ io.on('connection', function(client)
     irc_client.addListener('registered', function(message)
     {
         Join(client,client.channels);
+        client.emit('registered', message);
     });
 
     irc_client.addListener('motd', function(motd)
@@ -73,22 +79,22 @@ io.on('connection', function(client)
     
     irc_client.addListener('error', function(message)
     {
-		client.emit('erro', message.args[2]);
+		client.emit('error', message.args[2]);
     });
 
-    irc_client.addListener('join', function(channels,nick,message)
+    irc_client.addListener('join', function(channel,nick,message)
 	{
         console.log("[app.js] join");
-		client.emit('join', {'channels':channels, 'nick':nick});
+		client.emit('join', {'channel':channel, 'nick':nick});
     });
     
-    irc_client.addListener('part', function(channels,nick,reason,message)
+    irc_client.addListener('part', function(channel,nick,reason,message)
     {
         console.log("[app.js] part");
-        client.emit('part', {'channels':channels,'nick':nick, 'reason':reason} )
+        client.emit('part', {'channel':channel,'nick':nick, 'reason':reason} )
     });
 
-    irc_client.addListener('quit', function(nick, reason, channelss, message)
+    irc_client.addListener('quit', function(nick, reason, channel, message)
     {
         console.log("[app.js] quit");
 		client.emit('quit', nick);
@@ -97,7 +103,7 @@ io.on('connection', function(client)
 
     irc_client.addListener('message', function(nick, to, text, message)
     {		
-		var message = '&lt' + nick + '&gt ' + text;
+		var message = '&lt' + nick + '&gt ' + text; //&lt = less than = <, &gt = greater than = >
 		console.log('<' + nick + '>' + text);
 		client.emit('message',message);
 	});
@@ -110,7 +116,6 @@ io.on('connection', function(client)
     });
 
     clients[client.id] = client;
-    console.log(client.id,client.nick,client.channels);
 
 });
 

@@ -1,6 +1,7 @@
 var path = require('path');
 var PrivateMessage = require('./PrivateMessage');
 var Join = require('./Join');
+var Part = require('./Part');
 
 function Message(msg,client)
 {
@@ -29,7 +30,11 @@ function Message(msg,client)
                 case '/PRIVMSG': PrivateMessage(message,client,args[1]);
                 break;
 
+                case '/PART': Part(client, args[1].split(","));
+                break;
+
                 default: client.emit('error', 'Invalid command.');
+                break;
             }   
         }
         

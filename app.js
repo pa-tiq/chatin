@@ -79,7 +79,7 @@ io.on('connection', function(client)
     
     irc_client.addListener('error', function(message)
     {
-		client.emit('erro', message.args[2]);
+		client.emit('error', message.args[2]);
     });
 
     irc_client.addListener('join', function(channel,nick,message)

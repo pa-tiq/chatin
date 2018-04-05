@@ -23,12 +23,16 @@ var Message = require('./commands/Message'); //all typed messages go through fun
 var Join = require('./commands/Join');
 
 var clients = [];
+var already_on = false;
 
 app.get('/',function(req,res)
 {
     if ( req.cookies.server && req.cookies.nick && req.cookies.id ) 
 	{		
-		res.sendFile(path.join(__dirname, '/index.html'));
+        res.sendFile(path.join(__dirname, '/index.html'));
+
+        if(clients.indexOf(req.cookies.id) != -1) already_on = true;
+        console.log("already on: "+already_on.toString());
 	}
 	else 
 	{
@@ -61,62 +65,75 @@ io.on('connection', function(client)
 	client.server = client.request.headers.cookie.server;
     client.channels = client.request.headers.cookie.channels.split(",");
     client.id = client.request.headers.cookie.id;
-
-    var irc_client = new irc.Client(client.server, client.nick);
-
-    //irc client listens to updates from the irc server through the events below
-    //the response comes goes from here(server side) to the client side(functions.js)
-    irc_client.addListener('registered', function(message)
-    {
-        Join(client,client.channels);
-        client.emit('registered', message);
-    });
-
-    irc_client.addListener('motd', function(motd)
-    {
-        client.emit('motd', '<pre>'+motd+'</pre>');
-    });
     
-    irc_client.addListener('error', function(message)
-    {
-		client.emit('error', message.args[2]);
-    });
-
-    irc_client.addListener('join', function(channel,nick,message)
-	{
-        console.log("[app.js] join");
-		client.emit('join', {'channel':channel, 'nick':nick});
-    });
-    
-    irc_client.addListener('part', function(channel,nick,reason,message)
-    {
-        console.log("[app.js] part");
-        client.emit('part', {'channel':channel,'nick':nick, 'reason':reason} )
-    });
-
-    irc_client.addListener('quit', function(nick, reason, channel, message)
-    {
-        console.log("[app.js] quit");
-		client.emit('quit', nick);
-		client.disconnect();
-	});
-
-    irc_client.addListener('message', function(nick, to, text, message)
-    {		
-		var message = '&lt' + nick + '&gt ' + text; //&lt = less than = <, &gt = greater than = >
-		console.log('<' + nick + '>' + text);
-		client.emit('message',message);
-	});
-
-    client.irc_client = irc_client;
-
     client.on('message', function(msg)
     {
         Message(msg,client);
-    });
+    });    
 
-    clients[client.id] = client;
+    if(already_on)
+    {
+        client.irc_client = clients[clients.indexOf(client.id)];
+        client.irc_client.connect();
+    }
+    else
+    {
+        var irc_client = new irc.Client(client.server, client.nick);
 
+        //irc client listens to updates from the irc server through the events below
+        //the response goes from here(server side) to the client side(functions.js)
+        irc_client.addListener('registered', function(message)
+        {
+            Join(client,client.channels);
+            client.emit('registered', message);
+        });
+
+        irc_client.addListener('motd', function(motd)
+        {
+            client.emit('motd', '<pre>'+motd+'</pre>');
+        });
+        
+        irc_client.addListener('error', function(message)
+        {
+            client.emit('error', message.args[2]);
+        });
+
+        irc_client.addListener('join', function(channel,nick,message)
+        {
+            console.log("[app.js] join");
+            client.emit('join', {'channel':channel, 'nick':nick});
+        });
+        
+        irc_client.addListener('part', function(channel,nick,reason,message)
+        {
+            console.log("[app.js] part");
+            client.emit('part', {'channel':channel,'nick':nick, 'reason':reason} )
+        });
+
+        irc_client.addListener('quit', function(nick, reason, channel, message)
+        {
+            console.log("[app.js] quit");
+            client.emit('quit', nick);
+            client.disconnect();
+            clients[client.id]
+        });
+
+        irc_client.addListener('selfMessage', function(to, text)
+        {
+            console.log("[app.js] selfMessage: "+to+" "+text);
+            client.disconnect();
+        });
+
+        irc_client.addListener('message', function(nick, to, text, message)
+        {		
+            var message = '&lt' + nick + '&gt ' + text; //&lt = less than = <, &gt = greater than = >
+            console.log('<' + nick + '>' + text);
+            client.emit('message',message);
+        });
+
+        client.irc_client = irc_client;
+        clients[client.id] = client;
+    }
 });
 
 server.listen(3000, function()

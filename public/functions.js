@@ -9,6 +9,7 @@ $(document).ready(function() //JQuery
 		iosocket.on('motd', (motd)=>{$('#mural').append(motd+' <br>');});
 		iosocket.on('registered', (data)=>{$('#mural').append("[IRC] You're registered. <br>");});
 		iosocket.on('error', (error)=>{$('#mural').append('[IRC] ERROR! '+error+' <br>');});
+		iosocket.on('quit', (nick)=>{$('#mural').append('[IRC] '+nick+' disconnected. <br>');});
 
 		iosocket.on('part', function(data)
 		{

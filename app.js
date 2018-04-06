@@ -71,6 +71,17 @@ io.on('connection', function(client)
         Message(msg,client);
     });    
 
+    IRC(client);
+    
+    clients.push(client);
+
+    (clients).forEach(cl => {
+        console.log("\n>>>>>> nick: "+cl.nick+" id: "+cl.id);
+    });
+});
+
+function IRC(client)
+{
     if(already_on)
     {
         client.irc_client = clients[clients.indexOf(client.id)];
@@ -115,13 +126,12 @@ io.on('connection', function(client)
             console.log("[app.js] quit");
             client.emit('quit', nick);
             client.disconnect();
-            clients[client.id]
+            clients.splice(client.id,1);
         });
 
         irc_client.addListener('selfMessage', function(to, text)
         {
             console.log("[app.js] selfMessage: "+to+" "+text);
-            client.disconnect();
         });
 
         irc_client.addListener('message', function(nick, to, text, message)
@@ -132,9 +142,8 @@ io.on('connection', function(client)
         });
 
         client.irc_client = irc_client;
-        clients[client.id] = client;
     }
-});
+}
 
 server.listen(3000, function()
 {

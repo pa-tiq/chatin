@@ -32,6 +32,9 @@ function Message(msg,client)
 
                 case '/PART': Part(client, args[1].split(","));
                 break;
+                
+                case '/QUIT': client.irc_client.disconnect();
+                break;
 
                 default: client.emit('error', 'Invalid command.');
                 break;

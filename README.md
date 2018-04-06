@@ -1,5 +1,3 @@
 # chatin
-nodejs
-IRC protocol
-socketio
-cookies
+
+run with 'node app.js'

@@ -29,7 +29,7 @@ app.get('/',function(req,res)
 {
     if ( req.cookies.server && req.cookies.nick && req.cookies.id ) 
 	{		
-        res.sendFile(path.join(__dirname, '/index.html'));""
+        res.sendFile(path.join(__dirname, '/index.html'));
 
         if(clients.indexOf(req.cookies.id) != -1) already_on = true;
         console.log("already on: "+already_on.toString());

@@ -1,7 +1,7 @@
 //client
 
-$(document).ready(function() //JQuery
-{
+$(document).ready(function(){
+	
 	var iosocket = io(); 
 				
 	iosocket.on('connect', function () 
@@ -23,7 +23,7 @@ $(document).ready(function() //JQuery
                 channels.splice(chindex,1);
             }			
 
-			console.log("[PART] nick: "+nick+" <br> channels: "+channels);
+			console.log("[PART] nick: "+nick+" channels: "+channels);
 
 			if(nick == data.nick)
 			{
@@ -46,7 +46,7 @@ $(document).ready(function() //JQuery
 			if(channels.indexOf(data.channel) == -1) 
 					channels.push(data.channel);
 
-			console.log("[JOIN] nick: "+nick+" <br> channels: "+channels);
+			console.log("[JOIN] nick: "+nick+" channels: "+channels);
 
 			if(nick == data.nick)
 			{
@@ -84,6 +84,17 @@ $(document).ready(function() //JQuery
 		$('#mural').append('['+timestamp()+']: '+$('#message').val()+'<br>');
 		$('#message').val('');
 	});
+
+	window.addEventListener("beforeunload", function (e) {		
+
+		var nick = Cookies.get("nick");
+
+		console.log("[QUIT] nick: "+nick);
+		$('#mural').append('[IRC] '+nick+' disconnected. <br>');
+
+		iosocket.emit('quit', nick);
+	});
+
 });
 
 function timestamp() 
